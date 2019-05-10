@@ -27,18 +27,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 */
-#include <Wire.h>
-
 #include "ClosedCube_OPT3001.h"
 
-ClosedCube_OPT3001::ClosedCube_OPT3001()
+/*!
+ * @brief  OPT3001 constructor using i2c
+ * @param  *theWire
+ *         optional wire
+ */
+ClosedCube_OPT3001::ClosedCube_OPT3001(TwoWire *theWire)
 {
+	_wire = theWire;
 }
 
 OPT3001_ErrorCode ClosedCube_OPT3001::begin(uint8_t address) {
 	OPT3001_ErrorCode error = NO_ERROR;
 	_address = address;
-	Wire.begin();
+	_wire->begin();
 
 	return NO_ERROR;
 }
@@ -68,11 +72,11 @@ OPT3001_Config ClosedCube_OPT3001::readConfig() {
 }
 
 OPT3001_ErrorCode ClosedCube_OPT3001::writeConfig(OPT3001_Config config) {
-	Wire.beginTransmission(_address);
-	Wire.write(CONFIG);
-	Wire.write(config.rawData >> 8);
-	Wire.write(config.rawData & 0x00FF);
-	return (OPT3001_ErrorCode)(-10 * Wire.endTransmission());
+	_wire->beginTransmission(_address);
+	_wire->write(CONFIG);
+	_wire->write(config.rawData >> 8);
+	_wire->write(config.rawData & 0x00FF);
+	return (OPT3001_ErrorCode)(-10 * _wire->endTransmission());
 }
 
 OPT3001 ClosedCube_OPT3001::readResult() {
@@ -113,19 +117,19 @@ OPT3001 ClosedCube_OPT3001::readRegister(OPT3001_Commands command) {
 
 OPT3001_ErrorCode ClosedCube_OPT3001::writeData(OPT3001_Commands command)
 {
-	Wire.beginTransmission(_address);
-	Wire.write(command);
-	return (OPT3001_ErrorCode)(-10 * Wire.endTransmission(true));
+	_wire->beginTransmission(_address);
+	_wire->write(command);
+	return (OPT3001_ErrorCode)(-10 * _wire->endTransmission(true));
 }
 
 OPT3001_ErrorCode ClosedCube_OPT3001::readData(uint16_t* data)
 {
 	uint8_t	buf[2];
 
-	Wire.requestFrom(_address, (uint8_t)2);
+	_wire->requestFrom(_address, (uint8_t)2);
 
 	int counter = 0;
-	while (Wire.available() < 2)
+	while (_wire->available() < 2)
 	{
 		counter++;
 		delay(10);
@@ -133,7 +137,7 @@ OPT3001_ErrorCode ClosedCube_OPT3001::readData(uint16_t* data)
 			return TIMEOUT_ERROR;
 	}
 
-	Wire.readBytes(buf, 2);
+	_wire->readBytes(buf, 2);
 	*data = (buf[0] << 8) | buf[1];
 
 	return NO_ERROR;

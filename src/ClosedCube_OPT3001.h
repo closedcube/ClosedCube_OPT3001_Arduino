@@ -32,6 +32,11 @@ THE SOFTWARE.
 #define CLOSEDCUBE_OPT3001
 
 #include <Arduino.h>
+#include <Wire.h>
+
+//  Forward declarations of Wire for board/variant combinations that don't have a default 'Wire'
+extern TwoWire Wire;
+
 
 typedef enum {
 	RESULT		= 0x00,
@@ -89,7 +94,7 @@ struct OPT3001 {
 
 class ClosedCube_OPT3001 {
 public:
-	ClosedCube_OPT3001();
+	ClosedCube_OPT3001(TwoWire *theWire = &Wire);
 
 	OPT3001_ErrorCode begin(uint8_t address);
 
@@ -102,6 +107,8 @@ public:
 	
 	OPT3001_Config readConfig();
 	OPT3001_ErrorCode writeConfig(OPT3001_Config config);
+
+    TwoWire *_wire; /**< Wire object */
 
 private:
 	uint8_t _address;
