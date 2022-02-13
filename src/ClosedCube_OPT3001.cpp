@@ -35,15 +35,18 @@ ClosedCube_OPT3001::ClosedCube_OPT3001()
 {
 }
 
-OPT3001_ErrorCode ClosedCube_OPT3001::begin(uint8_t address) {
+OPT3001_ErrorCode ClosedCube_OPT3001::begin(uint8_t address, TwoWire &i2c_library))
+{
 	OPT3001_ErrorCode error = NO_ERROR;
 	_address = address;
-	Wire.begin();
+	_i2c_port = &i2c_library;
+	_i2c_port->begin();
 
 	return NO_ERROR;
 }
 
-uint16_t ClosedCube_OPT3001::readManufacturerID() {
+uint16_t ClosedCube_OPT3001::readManufacturerID()
+{
 	uint16_t result = 0;
 	OPT3001_ErrorCode error = writeData(MANUFACTURER_ID);
 	if (error == NO_ERROR)
@@ -51,7 +54,8 @@ uint16_t ClosedCube_OPT3001::readManufacturerID() {
 	return result;
 }
 
-uint16_t ClosedCube_OPT3001::readDeviceID() {
+uint16_t ClosedCube_OPT3001::readDeviceID()
+{
 	uint16_t result = 0;
 	OPT3001_ErrorCode error = writeData(DEVICE_ID);
 	if (error == NO_ERROR)
@@ -59,7 +63,8 @@ uint16_t ClosedCube_OPT3001::readDeviceID() {
 	return result;
 }
 
-OPT3001_Config ClosedCube_OPT3001::readConfig() {
+OPT3001_Config ClosedCube_OPT3001::readConfig()
+{
 	OPT3001_Config config;
 	OPT3001_ErrorCode error = writeData(CONFIG);
 	if (error == NO_ERROR)
@@ -67,65 +72,74 @@ OPT3001_Config ClosedCube_OPT3001::readConfig() {
 	return config;
 }
 
-OPT3001_ErrorCode ClosedCube_OPT3001::writeConfig(OPT3001_Config config) {
-	Wire.beginTransmission(_address);
-	Wire.write(CONFIG);
-	Wire.write(config.rawData >> 8);
-	Wire.write(config.rawData & 0x00FF);
-	return (OPT3001_ErrorCode)(-10 * Wire.endTransmission());
+OPT3001_ErrorCode ClosedCube_OPT3001::writeConfig(OPT3001_Config config)
+{
+	_i2c_port->beginTransmission(_address);
+	_i2c_port->write(CONFIG);
+	_i2c_port->write(config.rawData >> 8);
+	_i2c_port->write(config.rawData & 0x00FF);
+	return (OPT3001_ErrorCode)(-10 * _i2c_port->endTransmission());
 }
 
-OPT3001 ClosedCube_OPT3001::readResult() {
+OPT3001 ClosedCube_OPT3001::readResult()
+{
 	return readRegister(RESULT);
 }
 
-OPT3001 ClosedCube_OPT3001::readHighLimit() {
+OPT3001 ClosedCube_OPT3001::readHighLimit()
+{
 	return readRegister(HIGH_LIMIT);
 }
 
-OPT3001 ClosedCube_OPT3001::readLowLimit() {
+OPT3001 ClosedCube_OPT3001::readLowLimit()
+{
 	return readRegister(LOW_LIMIT);
 }
 
-OPT3001 ClosedCube_OPT3001::readRegister(OPT3001_Commands command) {
+OPT3001 ClosedCube_OPT3001::readRegister(OPT3001_Commands command)
+{
 	OPT3001_ErrorCode error = writeData(command);
-	if (error == NO_ERROR) {
+	if (error == NO_ERROR)
+	{
 		OPT3001 result;
 		result.lux = 0;
 		result.error = NO_ERROR;
 
 		OPT3001_ER er;
 		error = readData(&er.rawData);
-		if (error == NO_ERROR) {
+		if (error == NO_ERROR)
+		{
 			result.raw = er;
-			result.lux = 0.01*pow(2, er.Exponent)*er.Result;
+			result.lux = 0.01 * pow(2, er.Exponent) * er.Result;
 		}
-		else {
+		else
+		{
 			result.error = error;
 		}
 
 		return result;
 	}
-	else {
+	else
+	{
 		return returnError(error);
 	}
 }
 
 OPT3001_ErrorCode ClosedCube_OPT3001::writeData(OPT3001_Commands command)
 {
-	Wire.beginTransmission(_address);
-	Wire.write(command);
-	return (OPT3001_ErrorCode)(-10 * Wire.endTransmission(true));
+	_i2c_port->beginTransmission(_address);
+	_i2c_port->write(command);
+	return (OPT3001_ErrorCode)(-10 * _i2c_port->endTransmission(true));
 }
 
-OPT3001_ErrorCode ClosedCube_OPT3001::readData(uint16_t* data)
+OPT3001_ErrorCode ClosedCube_OPT3001::readData(uint16_t *data)
 {
-	uint8_t	buf[2];
+	uint8_t buf[2];
 
-	Wire.requestFrom(_address, (uint8_t)2);
+	_i2c_port->requestFrom(_address, (uint8_t)2);
 
 	int counter = 0;
-	while (Wire.available() < 2)
+	while (_i2c_port->available() < 2)
 	{
 		counter++;
 		delay(10);
@@ -133,14 +147,14 @@ OPT3001_ErrorCode ClosedCube_OPT3001::readData(uint16_t* data)
 			return TIMEOUT_ERROR;
 	}
 
-	Wire.readBytes(buf, 2);
+	_i2c_port->readBytes(buf, 2);
 	*data = (buf[0] << 8) | buf[1];
 
 	return NO_ERROR;
 }
 
-
-OPT3001 ClosedCube_OPT3001::returnError(OPT3001_ErrorCode error) {
+OPT3001 ClosedCube_OPT3001::returnError(OPT3001_ErrorCode error)
+{
 	OPT3001 result;
 	result.lux = 0;
 	result.error = error;

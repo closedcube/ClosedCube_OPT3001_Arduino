@@ -33,18 +33,19 @@ THE SOFTWARE.
 
 #include <Arduino.h>
 
-typedef enum {
-	RESULT		= 0x00,
-	CONFIG		= 0x01,
-	LOW_LIMIT	= 0x02,
-	HIGH_LIMIT	= 0x03,
+typedef enum
+{
+	RESULT = 0x00,
+	CONFIG = 0x01,
+	LOW_LIMIT = 0x02,
+	HIGH_LIMIT = 0x03,
 
 	MANUFACTURER_ID = 0x7E,
-	DEVICE_ID		= 0x7F,
+	DEVICE_ID = 0x7F,
 } OPT3001_Commands;
 
-
-typedef enum {
+typedef enum
+{
 	NO_ERROR = 0,
 	TIMEOUT_ERROR = -100,
 
@@ -55,17 +56,20 @@ typedef enum {
 	WIRE_I2C_UNKNOW_ERROR = -40
 } OPT3001_ErrorCode;
 
-typedef union {
+typedef union
+{
 	uint16_t rawData;
-	struct {
+	struct
+	{
 		uint16_t Result : 12;
 		uint8_t Exponent : 4;
 	};
 } OPT3001_ER;
 
-
-typedef union {
-	struct {
+typedef union
+{
+	struct
+	{
 		uint8_t FaultCount : 2;
 		uint8_t MaskExponent : 1;
 		uint8_t Polarity : 1;
@@ -76,22 +80,24 @@ typedef union {
 		uint8_t OverflowFlag : 1;
 		uint8_t ModeOfConversionOperation : 2;
 		uint8_t ConvertionTime : 1;
-		uint8_t RangeNumber : 4;		
+		uint8_t RangeNumber : 4;
 	};
 	uint16_t rawData;
 } OPT3001_Config;
 
-struct OPT3001 {
+struct OPT3001
+{
 	float lux;
 	OPT3001_ER raw;
 	OPT3001_ErrorCode error;
 };
 
-class ClosedCube_OPT3001 {
+class ClosedCube_OPT3001
+{
 public:
 	ClosedCube_OPT3001();
 
-	OPT3001_ErrorCode begin(uint8_t address);
+	OPT3001_ErrorCode begin(uint8_t address, TwoWire &i2c_library = Wire);
 
 	uint16_t readManufacturerID();
 	uint16_t readDeviceID();
@@ -99,7 +105,7 @@ public:
 	OPT3001 readResult();
 	OPT3001 readHighLimit();
 	OPT3001 readLowLimit();
-	
+
 	OPT3001_Config readConfig();
 	OPT3001_ErrorCode writeConfig(OPT3001_Config config);
 
@@ -107,13 +113,14 @@ private:
 	uint8_t _address;
 
 	OPT3001_ErrorCode writeData(OPT3001_Commands command);
-	OPT3001_ErrorCode readData(uint16_t* data);
+	OPT3001_ErrorCode readData(uint16_t *data);
 
 	OPT3001 readRegister(OPT3001_Commands command);
 	OPT3001 returnError(OPT3001_ErrorCode error);
 
 	float calculateLux(OPT3001_ER er);
+
+	TwoWire *_i2c_port = &Wire;
 };
 
-
-#endif 
+#endif
