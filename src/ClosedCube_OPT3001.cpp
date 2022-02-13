@@ -35,7 +35,7 @@ ClosedCube_OPT3001::ClosedCube_OPT3001()
 {
 }
 
-OPT3001_ErrorCode ClosedCube_OPT3001::begin(uint8_t address, TwoWire &i2c_library))
+OPT3001_ErrorCode ClosedCube_OPT3001::begin(uint8_t address, TwoWire &i2c_library)
 {
 	OPT3001_ErrorCode error = NO_ERROR;
 	_address = address;
